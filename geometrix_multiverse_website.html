@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="kk" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeometriX: Non-Euclidean Multiverse</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        euclid: { DEFAULT: '#06b6d4', dark: '#0e7490', light: '#67e8f9' },
+                        hyperbolic: { DEFAULT: '#f59e0b', dark: '#b45309', light: '#fde047' },
+                        elliptic: { DEFAULT: '#f43f5e', dark: '#be123c', light: '#fda4af' },
+                        space: { 950: '#030712', 900: '#0b0f19', 800: '#111827', 700: '#1f2937' }
+                    },
+                    fontFamily: {
+                        mono: ['JetBrains Mono', 'monospace'],
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'neon-cyan': '0 0 25px rgba(6, 182, 212, 0.4)',
+                        'neon-amber': '0 0 25px rgba(245, 158, 11, 0.4)',
+                        'neon-rose': '0 0 25px rgba(244, 63, 94, 0.4)',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Three.js & OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #030712;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
+        .font-mono-num {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .multiverse-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #030712; }
+        ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #374151; }
+    </style>
+</head>
+<body class="min-h-screen text-slate-100 bg-space-950 selection:bg-cyan-500 selection:text-black">
+
+    <!-- TOP NAVIGATION & MULTIVERSE CONTROL BAR -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-slate-800/80 px-4 lg:px-8 py-3">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            
+            <!-- Logo & Brand -->
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 via-indigo-500 to-rose-500 p-0.5 shadow-neon-cyan">
+                    <div class="w-full h-full bg-space-950 rounded-[10px] flex items-center justify-center">
+                        <i class="fa-solid fa-atom text-cyan-400 text-lg animate-spin" style="animation-duration: 12s;"></i>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-xl font-black tracking-wider bg-gradient-to-r from-cyan-400 via-amber-300 to-rose-400 bg-clip-text text-transparent">
+                            GEOMETRIX
+                        </h1>
+                        <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-indigo-950 border border-indigo-500/30 text-indigo-300">
+                            Multiverse 3D
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-400">Евклидтік емес геометриялар мен қисық кеңістіктер</p>
+                </div>
+            </div>
+
+            <!-- Global Multiverse Selector -->
+            <div class="flex items-center bg-space-900/90 p-1 rounded-2xl border border-slate-800 text-xs font-semibold">
+                <button onclick="switchWorld('euclidean')" id="world-btn-euclidean" class="multiverse-btn px-4 py-2 rounded-xl flex items-center gap-2 text-cyan-400 bg-cyan-950/80 border border-cyan-500/40 shadow-neon-cyan">
+                    <i class="fa-solid fa-vector-square"></i>
+                    <span>Евклид (K=0)</span>
+                </button>
+                <button onclick="switchWorld('hyperbolic')" id="world-btn-hyperbolic" class="multiverse-btn px-4 py-2 rounded-xl flex items-center gap-2 text-slate-400 hover:text-amber-400">
+                    <i class="fa-solid fa-mountain text-amber-500"></i>
+                    <span>Лобачевский (K&lt;0)</span>
+                </button>
+                <button onclick="switchWorld('elliptic')" id="world-btn-elliptic" class="multiverse-btn px-4 py-2 rounded-xl flex items-center gap-2 text-slate-400 hover:text-rose-400">
+                    <i class="fa-solid fa-globe text-rose-500"></i>
+                    <span>Риман (K&gt;0)</span>
+                </button>
+            </div>
+
+            <!-- Navigation Sections Switcher -->
+            <nav class="flex items-center space-x-1 text-xs">
+                <button onclick="switchTab('simulators')" id="tab-btn-simulators" class="px-3 py-2 rounded-lg font-semibold bg-slate-800 text-white border border-slate-700">
+                    <i class="fa-solid fa-cubes mr-1"></i>3D Симуляторлар
+                </button>
+                <button onclick="switchTab('matrix')" id="tab-btn-matrix" class="px-3 py-2 rounded-lg font-semibold text-slate-400 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-table-cells mr-1"></i>Кесте
+                </button>
+                <button onclick="switchTab('theory')" id="tab-btn-theory" class="px-3 py-2 rounded-lg font-semibold text-slate-400 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-brain mr-1"></i>Философия & Тарих
+                </button>
+                <button onclick="switchTab('quiz')" id="tab-btn-quiz" class="px-3 py-2 rounded-lg font-semibold text-slate-400 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-gamepad mr-1"></i>Викторина
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- MAIN INTERACTIVE CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-8">
+
+        <!-- SECTION 1: 3D MULTIVERSE SIMULATORS & VISUALIZERS -->
+        <section id="sec-simulators" class="space-y-8">
+
+            <!-- WORLD DYNAMIC HERO BANNER -->
+            <div id="world-banner" class="relative overflow-hidden rounded-3xl p-6 md:p-8 transition-all duration-500 bg-gradient-to-r from-space-900 via-cyan-950/40 to-space-900 border border-cyan-500/30">
+                <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                    <div class="space-y-2 max-w-2xl">
+                        <span id="world-tag" class="inline-block px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-widest bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                            Кеңістік Ережесі: K = 0 (Нөлдік Қисықтық)
+                        </span>
+                        <h2 id="world-title" class="text-2xl md:text-4xl font-black text-white">
+                            Евклидтік Жалпақ Жазықтық Әлемі
+                        </h2>
+                        <p id="world-desc" class="text-sm md:text-base text-slate-300 leading-relaxed">
+                            Классикалық мектеп геометриясы. Кеңістік созылмайды және майыспайды. Нүкте арқылы берілген түзуге ДӘЛ 1 параллель түзу жүргізуге болады. Үшбұрыш бұрыштарының қосындысы әрдайым тура 180°-қа тең.
+                        </p>
+                    </div>
+
+                    <!-- Dynamic Curvature Meter Card -->
+                    <div class="bg-space-950/80 p-4 rounded-2xl border border-slate-800 min-w-[220px] space-y-2 text-center">
+                        <span class="text-xs font-mono uppercase text-slate-400">Гаусс Қисықтығы (K)</span>
+                        <div id="world-k-val" class="text-3xl font-black font-mono-num text-cyan-400">
+                            K = 0
+                        </div>
+                        <div id="world-sum-formula" class="text-xs font-mono text-slate-300 bg-space-900 p-2 rounded-xl">
+                            &Sigma;(&alpha;+&beta;+&gamma;) = 180°
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRIMARY 3D INTERACTIVE LAB -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- 3D Viewport Box -->
+                <div class="lg:col-span-8 glass-panel rounded-3xl p-4 md:p-6 border border-slate-800 flex flex-col relative">
+                    <div class="flex items-center justify-between mb-4 z-10">
+                        <div>
+                            <span class="text-xs font-mono uppercase text-indigo-400 tracking-wider">3D Лаборатория</span>
+                            <h3 id="lab-canvas-title" class="text-lg font-bold text-white">
+                                Сфералық Интерактивті Үшбұрыш Моделі
+                            </h3>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="reset3DCamera()" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-space-900 border border-slate-700 hover:border-cyan-500 text-slate-300">
+                                <i class="fa-solid fa-arrows-to-dot mr-1"></i>Камераны қалпына келтіру
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Main Three.js Container -->
+                    <div class="relative w-full h-[400px] sm:h-[480px] bg-space-950 rounded-2xl overflow-hidden border border-slate-800/80 flex items-center justify-center">
+                        <div id="main-3d-container" class="w-full h-full cursor-grab active:cursor-grabbing"></div>
+
+                        <div class="absolute bottom-4 left-4 pointer-events-none bg-space-900/90 backdrop-blur border border-slate-800 text-[11px] text-slate-300 px-3 py-2 rounded-xl flex items-center space-x-2">
+                            <i class="fa-solid fa-hand-pointer text-cyan-400 animate-bounce"></i>
+                            <span>Тышқанмен айналдырыңыз & төбелерді баптап бұрыштарды зерттеңіз</span>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Controls below 3D canvas -->
+                    <div id="controls-panel-sphere" class="mt-4 p-4 rounded-2xl bg-space-900/80 border border-slate-800 space-y-4" style="display: none;">
+                        <span class="text-xs font-bold uppercase text-slate-400 block border-b border-slate-800 pb-2">
+                            <i class="fa-solid fa-sliders text-cyan-400 mr-1.5"></i>Риман сфералық үшбұрышының Төбелерін Орнату:
+                        </span>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-indigo-400 font-bold">А Төбесі (&alpha;):</span>
+                                    <span id="label-slider-a" class="font-mono font-bold text-indigo-400">90°</span>
+                                </div>
+                                <input type="range" id="slider-vert-a" min="20" max="150" value="90" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-emerald-400 font-bold">B Төбесі (&beta;):</span>
+                                    <span id="label-slider-b" class="font-mono font-bold text-emerald-400">90°</span>
+                                </div>
+                                <input type="range" id="slider-vert-b" min="30" max="130" value="90" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-rose-400 font-bold">C Төбесі (&gamma;):</span>
+                                    <span id="label-slider-c" class="font-mono font-bold text-rose-400">90°</span>
+                                </div>
+                                <input type="range" id="slider-vert-c" min="30" max="130" value="90" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-500">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Geometry Metrics & Equations Panel -->
+                <div class="lg:col-span-4 glass-panel rounded-3xl p-5 border border-slate-800 flex flex-col justify-between space-y-6">
+                    <div>
+                        <div class="border-b border-slate-800 pb-3 mb-4 flex items-center justify-between">
+                            <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-calculator text-cyan-400"></i>
+                                Геометриялық Аналитика
+                            </h4>
+                            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
+                                Live Engine
+                            </span>
+                        </div>
+
+                        <!-- Live Metrics Display -->
+                        <div class="space-y-4">
+                            <div class="bg-space-950 p-4 rounded-2xl border border-slate-800">
+                                <span class="text-xs text-slate-400 block mb-2 font-mono">Үшбұрыштың ішкі бұрыштары:</span>
+                                <div class="grid grid-cols-3 gap-2 text-center font-mono-num font-bold text-sm">
+                                    <div class="bg-indigo-950/60 p-2 rounded-xl border border-indigo-800/40">
+                                        <span class="text-[10px] text-slate-400 block font-sans">А (&alpha;)</span>
+                                        <span id="metric-angle-a" class="text-indigo-400 text-base">90°</span>
+                                    </div>
+                                    <div class="bg-emerald-950/60 p-2 rounded-xl border border-emerald-800/40">
+                                        <span class="text-[10px] text-slate-400 block font-sans">B (&beta;)</span>
+                                        <span id="metric-angle-b" class="text-emerald-400 text-base">90°</span>
+                                    </div>
+                                    <div class="bg-rose-950/60 p-2 rounded-xl border border-rose-800/40">
+                                        <span class="text-[10px] text-slate-400 block font-sans">C (&gamma;)</span>
+                                        <span id="metric-angle-c" class="text-rose-400 text-base">90°</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="box-metric-sum" class="p-5 rounded-2xl border bg-gradient-to-br from-rose-950/40 via-space-950 to-space-950 border-rose-500/30 text-center space-y-2">
+                                <span class="text-xs font-bold uppercase tracking-widest text-rose-300 block">
+                                    Бұрыштардың жалпы қосындысы (&Sigma;)
+                                </span>
+                                <div id="metric-sum-val" class="text-4xl font-black font-mono-num text-rose-400">
+                                    270°
+                                </div>
+                                <div id="metric-excess-val" class="text-xs font-mono font-bold text-emerald-400 bg-space-900/90 py-1.5 px-3 rounded-xl border border-slate-800 inline-block">
+                                    180°-тан артықшылығы (Сфералық эксцесс E): +90°
+                                </div>
+                            </div>
+
+                            <div class="p-4 bg-space-900/80 rounded-2xl border border-slate-800 space-y-2 text-xs">
+                                <span class="font-bold text-cyan-300 block flex items-center gap-1.5">
+                                    <i class="fa-solid fa-circle-info"></i>
+                                    Сфералық Геодезиялық Түзулер:
+                                </span>
+                                <p class="text-slate-300 leading-relaxed">
+                                    Сферада екі нүктені қосатын ең қысқа сызық — <b>Үлкен Шеңбер Доғасы</b>. Риман геометриясында осы доғалар «түзу сызықтар» ролін атқарады.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-indigo-950/30 border border-indigo-800/30 rounded-2xl text-[11px] text-indigo-300 flex items-center gap-2">
+                        <i class="fa-solid fa-sparkles text-amber-300 text-base"></i>
+                        <span>Риман геометриясында үшбұрыш ауданы оның эксцесіне пропорционал: S = R² · E</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECONDARY SIMULATOR: GENERAL RELATIVITY SPACETIME GRAVITY WELL -->
+            <div class="glass-panel rounded-3xl p-6 border border-slate-800 space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                    <div>
+                        <span class="text-xs font-mono uppercase text-rose-400 tracking-widest">Физикалық Төңкеріс</span>
+                        <h3 class="text-xl font-black text-white">
+                            Эйнштейннің Кеңістік-Уақыт Қисаю Симуляторы (Риман Геометриясы)
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-0.5">
+                            Ауыр массаның әсерінен кеңістік-уақыт торының созылуы және жарық сәулесінің қисаюы
+                        </p>
+                    </div>
+
+                    <div class="flex items-center gap-3 bg-space-900 p-2.5 rounded-2xl border border-slate-800">
+                        <label for="slider-mass" class="text-xs font-bold text-rose-300 flex items-center gap-1">
+                            <i class="fa-solid fa-circle-dot text-rose-500"></i>Масса (Гравитация):
+                        </label>
+                        <input type="range" id="slider-mass" min="0" max="100" value="60" class="w-32 h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-500">
+                        <span id="val-mass" class="font-mono text-xs text-rose-400 font-bold">60%</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                    <div class="lg:col-span-8 bg-space-950 rounded-2xl p-2 border border-slate-800 relative flex items-center justify-center">
+                        <canvas id="gravityCanvas" width="700" height="320" class="w-full h-[260px] sm:h-[320px] block rounded-xl"></canvas>
+                    </div>
+
+                    <div class="lg:col-span-4 space-y-4 text-xs sm:text-sm">
+                        <div class="bg-space-900/90 p-4 rounded-2xl border border-rose-500/30 space-y-2">
+                            <h4 class="font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-atom text-rose-400"></i>
+                                Неге бұл Риман Геометриясы?
+                            </h4>
+                            <p class="text-slate-300 leading-relaxed">
+                                Альберт Эйнштейн 1915 жылы Жалпы Салыстырмалылық Теориясында тартылыс күшін <b>ауыр массаның Риман кеңістігін қисайтуы</b> ретінде түсіндірді.
+                            </p>
+                        </div>
+
+                        <div class="p-4 bg-space-900/60 rounded-2xl border border-slate-800 space-y-2">
+                            <span class="font-bold text-cyan-300 block">
+                                <i class="fa-solid fa-bolt text-yellow-400 mr-1"></i>Жарық Сәулесінің Қисаюы:
+                            </span>
+                            <p class="text-slate-400 text-xs leading-relaxed">
+                                Жарық әрдайым ең қысқа жолмен (геодезиялық сызықпен) таралады. Кеңістіктің өзі майысқандықтан, жарық сәулесі де қисаяды.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- SECTION 2: COMPARATIVE MATRIX TABLE -->
+        <section id="sec-matrix" class="space-y-6 hidden">
+            <div class="text-center max-w-2xl mx-auto space-y-2">
+                <span class="text-xs font-mono font-bold uppercase text-cyan-400 tracking-wider">Салыстырмалы Аналитика</span>
+                <h2 class="text-2xl md:text-3xl font-black text-white">Үш Геометрияның Салыстырмалы Матрицасы</h2>
+            </div>
+
+            <div class="glass-panel rounded-3xl p-6 border border-slate-800 overflow-x-auto">
+                <table class="w-full text-left text-xs sm:text-sm border-collapse min-w-[700px]">
+                    <thead>
+                        <tr class="border-b border-slate-800 text-slate-400 font-mono text-[11px] uppercase tracking-wider">
+                            <th class="p-4 bg-space-900">Параметр</th>
+                            <th class="p-4 bg-cyan-950/40 text-cyan-300 border-l border-slate-800">Евклид Геометриясы</th>
+                            <th class="p-4 bg-amber-950/40 text-amber-300 border-l border-slate-800">Лобачевский (Гиперболалық)</th>
+                            <th class="p-4 bg-rose-950/40 text-rose-300 border-l border-slate-800">Риман (Эллипстік / Сфералық)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800/80 text-slate-300">
+                        <tr>
+                            <td class="p-4 font-bold text-white bg-space-900/50">Кеңістік беті</td>
+                            <td class="p-4 border-l border-slate-800/80">Тегіс жазықтық</td>
+                            <td class="p-4 border-l border-slate-800/80">Ершік беті (Saddle)</td>
+                            <td class="p-4 border-l border-slate-800/80">Сфералық / эллипстік бет</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 font-bold text-white bg-space-900/50">Гаусс Қисықтығы (K)</td>
+                            <td class="p-4 border-l border-slate-800/80 font-mono text-cyan-400 font-bold">K = 0</td>
+                            <td class="p-4 border-l border-slate-800/80 font-mono text-amber-400 font-bold">K &lt; 0</td>
+                            <td class="p-4 border-l border-slate-800/80 font-mono text-rose-400 font-bold">K &gt; 0</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 font-bold text-white bg-space-900/50">Параллель түзулер саны</td>
+                            <td class="p-4 border-l border-slate-800/80 font-semibold text-cyan-300">ДӘЛ 1 түзу</td>
+                            <td class="p-4 border-l border-slate-800/80 font-semibold text-amber-300">ШЕКСІЗ КӨП түзу</td>
+                            <td class="p-4 border-l border-slate-800/80 font-semibold text-rose-300">БІРДЕ-БІР түзу жоқ (0)</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 font-bold text-white bg-space-900/50">Үшбұрыш бұрыштар қосындысы</td>
+                            <td class="p-4 border-l border-slate-800/80 font-mono font-bold text-cyan-400">= 180°</td>
+                            <td class="p-4 border-l border-slate-800/80 font-mono font-bold text-amber-400">&lt; 180°</td>
+                            <td class="p-4 border-l border-slate-800/80 font-mono font-bold text-rose-400">&gt; 180°</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SECTION 3: PHILOSOPHICAL IMPACT -->
+        <section id="sec-theory" class="space-y-8 hidden">
+            <div class="text-center max-w-2xl mx-auto space-y-2">
+                <span class="text-xs font-mono font-bold uppercase text-indigo-400 tracking-wider">Математикалық Дүниетаным</span>
+                <h2 class="text-2xl md:text-3xl font-black text-white">Ғылыми Ғасырлар Төңкерісі</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-panel rounded-3xl p-6 border border-slate-800 space-y-4">
+                    <h3 class="text-lg font-bold text-white">1. V Постулат (Лобачевский & Бойяи)</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Николай Лобачевский (1826 ж.) мен Янош Бойяи (1832 ж.) параллельдік аксиомасын өзгертіп, қайшылықсыз жаңа гиперболалық геометрия құрды.
+                    </p>
+                </div>
+                <div class="glass-panel rounded-3xl p-6 border border-slate-800 space-y-4">
+                    <h3 class="text-lg font-bold text-white">2. Бернхард Риман</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        1854 жылы Риман геометрияны сфералық беттерге және n-өлшемді көпбейнеліліктерге жалпылап, кеңістік қисықтығы ұғымын енгізді.
+                    </p>
+                </div>
+                <div class="glass-panel rounded-3xl p-6 border border-slate-800 space-y-4">
+                    <h3 class="text-lg font-bold text-white">3. Дүниетанымдық Төңкеріс</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Адамзат Евклид геометриясы жалғыз абсолютті ақиқат емес, физикалық кеңістіктің құрылымы тәжірибемен анықталатынын түсінді.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: GAMIFIED KNOWLEDGE QUIZ -->
+        <section id="sec-quiz" class="space-y-6 hidden">
+            <div class="text-center max-w-xl mx-auto space-y-2">
+                <span class="text-xs font-mono font-bold uppercase text-emerald-400 tracking-wider">Геймификация</span>
+                <h2 class="text-2xl md:text-3xl font-black text-white">Интерактивті Білім Тесті</h2>
+            </div>
+
+            <div class="max-w-2xl mx-auto glass-panel rounded-3xl p-6 md:p-8 border border-slate-800 space-y-6">
+                <div id="quiz-q1" class="space-y-4">
+                    <span class="text-xs font-mono text-cyan-400">1-Сұрақ (Риман Геометриясы)</span>
+                    <h3 class="text-base font-bold text-white">
+                        Риман (сфералық) геометриясында сфера бетіндегі үшбұрыштың ішкі бұрыштарының қосындысы неге тең?
+                    </h3>
+                    <div class="space-y-2 text-xs sm:text-sm">
+                        <button onclick="answerQuiz(1, false, this)" class="w-full text-left p-4 rounded-2xl bg-space-950 border border-slate-800 hover:border-cyan-500 transition">
+                            А) Әрдайым тура 180°-қа тең
+                        </button>
+                        <button onclick="answerQuiz(1, true, this)" class="w-full text-left p-4 rounded-2xl bg-space-950 border border-slate-800 hover:border-cyan-500 transition">
+                            Ә) Әрдайым 180°-тан ҮЛКЕН
+                        </button>
+                        <button onclick="answerQuiz(1, false, this)" class="w-full text-left p-4 rounded-2xl bg-space-950 border border-slate-800 hover:border-cyan-500 transition">
+                            Б) Әрдайым 180°-тан КЕМ
+                        </button>
+                    </div>
+                </div>
+
+                <div id="quiz-result" class="hidden text-center space-y-3 py-4">
+                    <div class="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-3xl mx-auto">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-white">Өте тамаша!</h4>
+                    <p class="text-xs text-slate-300">Сіз теорияны толық меңгердіңіз.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="max-w-7xl mx-auto px-4 lg:px-8 py-8 text-center text-xs text-slate-600 border-t border-slate-900 mt-12">
+        <p>GeometriX Multiverse — Интерактивті 3D Оқу-Ғылыми Платформасы</p>
+    </footer>
+
+    <!-- JAVASCRIPT CORE LOGIC -->
+    <script>
+        let currentWorld = 'euclidean';
+
+        function switchWorld(world) {
+            currentWorld = world;
+
+            ['euclidean', 'hyperbolic', 'elliptic'].forEach(w => {
+                const btn = document.getElementById(`world-btn-${w}`);
+                btn.className = 'multiverse-btn px-4 py-2 rounded-xl flex items-center gap-2 text-slate-400 hover:text-white';
+            });
+
+            const activeBtn = document.getElementById(`world-btn-${world}`);
+            const banner = document.getElementById('world-banner');
+            const tag = document.getElementById('world-tag');
+            const title = document.getElementById('world-title');
+            const desc = document.getElementById('world-desc');
+            const kVal = document.getElementById('world-k-val');
+            const sumFormula = document.getElementById('world-sum-formula');
+            const labTitle = document.getElementById('lab-canvas-title');
+            const controlsSphere = document.getElementById('controls-panel-sphere');
+
+            if (world === 'euclidean') {
+                activeBtn.className = 'multiverse-btn px-4 py-2 rounded-xl flex items-center gap-2 text-cyan-400 bg-cyan-950/80 border border-cyan-500/40 shadow-neon-cyan';
+                banner.className = 'relative overflow-hidden rounded-3xl p-6 md:p-8 transition-all duration-500 bg-gradient-to-r from-space-900 via-cyan-950/40 to-space-900 border border-cyan-500/30';
+                tag.innerText = 'Кеңістік Ережесі: K = 0 (Нөлдік Қисықтық)';
+                title.innerText = 'Евклидтік Жалпақ Жазықтық Әлемі';
+                desc.innerText = 'Классикалық мектеп геометриясы. Кеңістік созылмайды және майыспайды. Нүкте арқылы берілген түзуге ДӘЛ 1 параллель түзу жүргізуге болады.';
+                kVal.className = 'text-3xl font-black font-mono-num text-cyan-400';
+                kVal.innerText = 'K = 0';
+                sumFormula.innerText = '∑ = 180°';
+                labTitle.innerText = 'Евклидтік Жалпақ Түзулер симуляторы';
+                controlsSphere.style.display = 'none';
+
+            } else if (world === 'hyperbolic') {
+                activeBtn.className = 'multiverse-btn px-4 py-2 rounded-xl flex items-center gap-2 text-amber-400 bg-amber-950/80 border border-amber-500/40 shadow-neon-amber';
+                banner.className = 'relative overflow-hidden rounded-3xl p-6 md:p-8 transition-all duration-500 bg-gradient-to-r from-space-900 via-amber-950/40 to-space-900 border border-amber-500/30';
+                tag.innerText = 'Кеңістік Ережесі: K < 0 (Теріс Қисықтық)';
+                title.innerText = 'Лобачевский Гиперболалық Әлемі';
+                desc.innerText = 'Ершік тәріздес майысқан бет. Берілген нүкте арқылы түзуге қиылыспайтын ШЕКСІЗ КӨП параллель түзу жүргізуге болады.';
+                kVal.className = 'text-3xl font-black font-mono-num text-amber-400';
+                kVal.innerText = 'K < 0';
+                sumFormula.innerText = '∑ < 180°';
+                labTitle.innerText = '3D Ершік Беті (Saddle Surface)';
+                controlsSphere.style.display = 'none';
+
+            } else if (world === 'elliptic') {
+                activeBtn.className = 'multiverse-btn px-4 py-2 rounded-xl flex items-center gap-2 text-rose-400 bg-rose-950/80 border border-rose-500/40 shadow-neon-rose';
+                banner.className = 'relative overflow-hidden rounded-3xl p-6 md:p-8 transition-all duration-500 bg-gradient-to-r from-space-900 via-rose-950/40 to-space-900 border border-rose-500/30';
+                tag.innerText = 'Кеңістік Ережесі: K > 0 (Оң Қисықтық)';
+                title.innerText = 'Риман Сфералық (Эллипстік) Әлемі';
+                desc.innerText = 'Сфералық тұйық кеңістік. Параллель түзулер атымен болмайды. Үшбұрыш бұрыштарының қосындысы 180°-тан ҮЛКЕН.';
+                kVal.className = 'text-3xl font-black font-mono-num text-rose-400';
+                kVal.innerText = 'K > 0';
+                sumFormula.innerText = '∑ > 180°';
+                labTitle.innerText = '3D Сфералық Интерактивті Үшбұрыш Моделі';
+                controlsSphere.style.display = 'block';
+            }
+
+            render3DScene();
+        }
+
+        function switchTab(tab) {
+            ['simulators', 'matrix', 'theory', 'quiz'].forEach(t => {
+                document.getElementById(`sec-${t}`).classList.add('hidden');
+                document.getElementById(`tab-btn-${t}`).className = 'px-3 py-2 rounded-lg font-semibold text-slate-400 hover:text-white hover:bg-slate-800';
+            });
+            document.getElementById(`sec-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-btn-${tab}`).className = 'px-3 py-2 rounded-lg font-semibold bg-slate-800 text-white border border-slate-700';
+        }
+
+        /* THREE.JS ENGINE */
+        let scene, camera, renderer, controls;
+        let mainGroup, sphereMesh, triangleGroup, markersGroup;
+        const sphereRadius = 2.4;
+
+        function init3DEngine() {
+            const container = document.getElementById('main-3d-container');
+            if (!container) return;
+
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(0, 2, 6.5);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+
+            const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+            scene.add(ambient);
+
+            const dirLight1 = new THREE.DirectionalLight(0x38bdf8, 1.2);
+            dirLight1.position.set(5, 10, 7);
+            scene.add(dirLight1);
+
+            mainGroup = new THREE.Group();
+            scene.add(mainGroup);
+
+            triangleGroup = new THREE.Group();
+            markersGroup = new THREE.Group();
+            scene.add(triangleGroup);
+            scene.add(markersGroup);
+
+            render3DScene();
+
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+            }
+            animate();
+        }
+
+        function reset3DCamera() {
+            if (camera && controls) {
+                camera.position.set(0, 2, 6.5);
+                controls.target.set(0, 0, 0);
+            }
+        }
+
+        function render3DScene() {
+            if (!mainGroup) return;
+
+            while (mainGroup.children.length > 0) mainGroup.remove(mainGroup.children[0]);
+            while (triangleGroup.children.length > 0) triangleGroup.remove(triangleGroup.children[0]);
+            while (markersGroup.children.length > 0) markersGroup.remove(markersGroup.children[0]);
+
+            if (currentWorld === 'euclidean') {
+                const grid = new THREE.GridHelper(8, 20, 0x06b6d4, 0x1f2937);
+                grid.position.y = -0.5;
+                mainGroup.add(grid);
+
+            } else if (currentWorld === 'hyperbolic') {
+                const saddleGeo = new THREE.ParametricGeometry((u, v, target) => {
+                    const x = (u - 0.5) * 4;
+                    const y = (v - 0.5) * 4;
+                    const z = (x * x - y * y) * 0.25;
+                    target.set(x, z, y);
+                }, 30, 30);
+
+                const saddleMat = new THREE.MeshStandardMaterial({ color: 0xb45309, wireframe: true });
+                mainGroup.add(new THREE.Mesh(saddleGeo, saddleMat));
+
+            } else if (currentWorld === 'elliptic') {
+                const sphereGeo = new THREE.SphereGeometry(sphereRadius, 32, 32);
+                const sphereMat = new THREE.MeshPhongMaterial({ color: 0x1e1b4b, wireframe: true, transparent: true, opacity: 0.3 });
+                sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
+                mainGroup.add(sphereMesh);
+
+                updateSphericalTriangleGeometry();
+            }
+        }
+
+        function createGreatCircleArc(p1, p2, colorHex = 0xf43f5e) {
+            const points = [];
+            const steps = 60;
+            const v1 = p1.clone().normalize();
+            const v2 = p2.clone().normalize();
+
+            for (let i = 0; i <= steps; i++) {
+                const t = i / steps;
+                const q = new THREE.Quaternion();
+                THREE.Quaternion.slerp(
+                    new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1,0,0), v1),
+                    new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1,0,0), v2),
+                    q, t
+                );
+                const pt = new THREE.Vector3(1,0,0).applyQuaternion(q).multiplyScalar(sphereRadius + 0.02);
+                points.push(pt);
+            }
+
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineBasicMaterial({ color: colorHex, linewidth: 3 });
+            return new THREE.Line(geometry, material);
+        }
+
+        function updateSphericalTriangleGeometry() {
+            if (currentWorld !== 'elliptic') return;
+
+            while (triangleGroup.children.length > 0) triangleGroup.remove(triangleGroup.children[0]);
+            while (markersGroup.children.length > 0) markersGroup.remove(markersGroup.children[0]);
+
+            const valA = parseFloat(document.getElementById('slider-vert-a').value);
+            const valB = parseFloat(document.getElementById('slider-vert-b').value);
+            const valC = parseFloat(document.getElementById('slider-vert-c').value);
+
+            document.getElementById('label-slider-a').innerText = `${valA}°`;
+            document.getElementById('label-slider-b').innerText = `${valB}°`;
+            document.getElementById('label-slider-c').innerText = `${valC}°`;
+
+            document.getElementById('metric-angle-a').innerText = `${valA}°`;
+            document.getElementById('metric-angle-b').innerText = `${valB}°`;
+            document.getElementById('metric-angle-c').innerText = `${valC}°`;
+
+            const totalSum = valA + valB + valC;
+            const excess = totalSum - 180;
+
+            document.getElementById('metric-sum-val').innerText = `${totalSum}°`;
+            document.getElementById('metric-excess-val').innerText = `180°-тан артықшылығы (Сфералық эксцесс E): +${excess}°`;
+
+            const radA = (valA * Math.PI) / 180;
+            const vA = new THREE.Vector3(0, sphereRadius, 0);
+            const vB = new THREE.Vector3(sphereRadius * Math.sin(radA / 2), 0, sphereRadius * Math.cos(radA / 2));
+            const vC = new THREE.Vector3(-sphereRadius * Math.sin(radA / 2), 0, sphereRadius * Math.cos(radA / 2));
+
+            triangleGroup.add(createGreatCircleArc(vA, vB, 0x818cf8));
+            triangleGroup.add(createGreatCircleArc(vA, vC, 0x818cf8));
+            triangleGroup.add(createGreatCircleArc(vB, vC, 0xf43f5e));
+
+            [vA, vB, vC].forEach((v, idx) => {
+                const markGeo = new THREE.SphereGeometry(0.08, 16, 16);
+                const markMat = new THREE.MeshBasicMaterial({ color: idx === 0 ? 0x6366f1 : (idx === 1 ? 0x10b981 : 0xf43f5e) });
+                const markMesh = new THREE.Mesh(markGeo, markMat);
+                markMesh.position.copy(v);
+                markersGroup.add(markMesh);
+            });
+        }
+
+        document.getElementById('slider-vert-a').addEventListener('input', updateSphericalTriangleGeometry);
+        document.getElementById('slider-vert-b').addEventListener('input', updateSphericalTriangleGeometry);
+        document.getElementById('slider-vert-c').addEventListener('input', updateSphericalTriangleGeometry);
+
+        function drawGravityCanvas() {
+            const canvas = document.getElementById('gravityCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            const massVal = parseFloat(document.getElementById('slider-mass').value);
+            document.getElementById('val-mass').innerText = `${massVal}%`;
+
+            ctx.clearRect(0, 0, w, h);
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.2)';
+            ctx.lineWidth = 1;
+
+            const centerX = w / 2;
+            const centerY = h / 2;
+
+            for (let x = 0; x <= w; x += 30) {
+                ctx.beginPath();
+                for (let y = 0; y <= h; y += 10) {
+                    const dist = Math.hypot(x - centerX, y - centerY);
+                    const warp = (massVal * 35) / (dist + 30);
+                    const drawX = x + (centerX - x) * (warp / 120);
+                    const drawY = y + (centerY - y) * (warp / 120);
+
+                    if (y === 0) ctx.moveTo(drawX, drawY);
+                    else ctx.lineTo(drawX, drawY);
+                }
+                ctx.stroke();
+            }
+
+            const radius = 15 + (massVal * 0.25);
+            const grad = ctx.createRadialGradient(centerX, centerY, 2, centerX, centerY, radius * 2);
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.4, '#f43f5e');
+            grad.addColorStop(1, 'transparent');
+
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius * 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = '#fde047';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(30, centerY + 90);
+            const bendOffset = massVal * 1.8;
+            ctx.quadraticCurveTo(centerX, centerY - bendOffset, w - 30, centerY + 90);
+            ctx.stroke();
+        }
+
+        document.getElementById('slider-mass').addEventListener('input', drawGravityCanvas);
+
+        function answerQuiz(qNum, isCorrect, btn) {
+            if (isCorrect) {
+                btn.className = 'w-full text-left p-4 rounded-2xl bg-emerald-950 border border-emerald-500 text-emerald-300 transition font-bold';
+                setTimeout(() => {
+                    document.getElementById('quiz-q1').classList.add('hidden');
+                    document.getElementById('quiz-result').classList.remove('hidden');
+                }, 800);
+            } else {
+                btn.className = 'w-full text-left p-4 rounded-2xl bg-rose-950 border border-rose-500 text-rose-300 transition';
+            }
+        }
+
+        window.addEventListener('load', () => {
+            init3DEngine();
+            drawGravityCanvas();
+        });
+    </script>
+</body>
+</html>
